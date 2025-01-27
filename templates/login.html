@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>  <h1 style = "width:150%"></h1><h1 class="title"> Add Account</title></head></h1>
+    <style>
+        .title {
+            margin: 5px;
+            
+        }
+
+        .content {
+            margin: px;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            height: 60vh;
+        }
+
+        .account {
+            flex: 20%;
+            padding: 10px;
+            margin: 5px;
+            background-color: #f3f3f3;
+            inline-size: 100%;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            width: 25em;
+        }
+
+        .name a {
+            color: #00a36f;
+            text-decoration: none;
+        }
+        input[type="text"],input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        nav a {
+            color: #40826D;
+            font-size: 2em;
+            margin-left: 0px;
+            text-decoration: none;
+        }
+        button{
+            width:100%;
+            padding: 10px;
+            background-color: #28a745;
+            border: none;
+            color: white;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover{
+            background-color: #218838;
+        }
+        label[for="Login"] {
+            font-size: 30px;
+        } 
+        #bottom-half{
+            background-color: #f3f3f3;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body> 
+    <nav>
+        <a href="{{url_for('index') }}" class="cta-button">KarsFinance</a>
+    </nav>
+   
+    <div id="bottom-half">
+    <hr>
+    <div class="content">
+        <div class="login-container">
+        <form method="post">
+            <p>
+                <label for="Login"> <b>Login<b></label>
+                    <br><br>
+                <label for="subtext"> <b>Username<b></label>
+                <input type="text" name="username">
+            </p>
+    
+            <p>
+                <label for="subtext"> <b>Password<b></label>
+                <input type="text" name="password">
+                </input>
+            </p>
+    
+            <p>
+                <button type="Register">Login</button>
+            </p>
+        </form>
+    </div>
+    </div>
+    </div>
+</body>
+</html>
