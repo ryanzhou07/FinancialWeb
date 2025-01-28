@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, url_for, redirect, flash, session
+from flask import Flask, render_template, request, url_for, redirect, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import flask_admin
 from flask_admin import Admin
@@ -7,6 +7,11 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from sqlalchemy.sql import func
 import requests
+import csv
+import json
+import yfinance as yf
+import pandas as pd
+import data
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -16,9 +21,8 @@ app.config['SECRET_KEY'] = 'your secret key'
 
 
 finnhub_url = 'https://finnhub.io/api/v1/'
-alphavantage_url = 'https://www.alphavantage.co/query?'
 token_finnhub = 'your token'
-token_alphavantage = 'your token'
+
 
 ##SQL Config
 app.config['SQLALCHEMY_DATABASE_URI'] ='sqlite:///' + os.path.join(basedir, 'database.db')
@@ -39,8 +43,6 @@ with app.app_context():
 admin = Admin(app, name='Admin', template_mode='bootstrap3')
 
 admin.add_view(ModelView(Account, db.session))
-
-
 
 ##Connects to Front Page
 @app.route('/')
@@ -76,6 +78,7 @@ def login():
             flash('Invalid credentials, please try again.', 'danger')
 
     return render_template('login.html')
+
 @app.route('/simulator')
 def simulator():
     return render_template('simulator.html')
