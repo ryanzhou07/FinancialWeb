@@ -11,7 +11,7 @@ import csv
 import json
 import yfinance as yf
 import pandas as pd
-import data
+from createData import data_call
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -25,8 +25,7 @@ token_finnhub = 'your token'
 
 
 ##SQL Config
-app.config['SQLALCHEMY_DATABASE_URI'] ='sqlite:///' + os.path.join(basedir, 'database.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db.init_app(app)
 
 ##database
@@ -79,9 +78,20 @@ def login():
 
     return render_template('login.html')
 
-@app.route('/simulator')
+@app.route('/simulator', methods = ('GET','POST'))
 def simulator():
-    return render_template('simulator.html')
+    if request.method == 'POST':
+        company = request.form.get("stockDropdown")
+        data_call(company)
+        
+    return render_template('simulator.html', company = company)
+
+@app.route('/get-data')
+def get_data():
+    with(open('static/data.json','r')) as f:
+        data = json.load(f)
+    return jsonify(data)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
