@@ -1,6 +1,8 @@
 import os
 from flask import Flask, render_template, request, url_for, redirect, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 import flask_admin
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
@@ -23,18 +25,31 @@ app.config['SECRET_KEY'] = 'your secret key'
 finnhub_url = 'https://finnhub.io/api/v1/'
 token_finnhub = 'your token'
 
-
 ##SQL Config
 
 db.init_app(app)
 
-##database
+##database for account
 class Account(db.Model):
+    __tablename__ = "accounts"
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    stocks = relationship('Stock', backref='portfolio', lazy=True)
+    money = db.Column(db.Float, default = 100_000_000)
+    total_value = db.Column(db.Float, default = 100_000_000)
 
+##Stocks in a table
+class Stock(db.Model):
+    __tablename__ = "Stock"
+    
+    id = db.Column(db.Integer, primary_key = True)
+    ticker = db.Column(db.String(10),nullable = False)
+    shares = db.Column(db.Float,nullable = False)
+    account_id = db.Column(db.Integer, ForeignKey('accounts.id'),nullable=False)
+    
 with app.app_context():
         db.create_all()
         
@@ -80,13 +95,9 @@ def login():
 
 @app.route('/simulator', methods = ('GET','POST'))
 def simulator():
-    if request.method == 'POST':
-        company = request.form.get("stockDropdown")
-        data_call(company)
-        
-    return render_template('simulator.html', company = company)
+    return render_template('simulator.html')
 
-@app.route('/get-data')
+@app.route('/get-data', methods = ['Post'])
 def get_data():
     with(open('static/data.json','r')) as f:
         data = json.load(f)
