@@ -137,7 +137,7 @@ def login():
 #Renders Simulator Page
 @app.route('/trading', methods = ('GET','POST'))
 def trading():
-    return render_template('trading.html')
+    return render_template('simulator/trading.html')
 
 #Gets Data to be presented
 @app.route('/get-data', methods = ['Post'])
@@ -166,7 +166,7 @@ def search_stock():
 
 @app.route('/portfolio')
 def portfolio():
-    return render_template('portfolio.html')
+    return render_template('simulator/portfolio.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
