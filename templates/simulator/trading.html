@@ -23,13 +23,14 @@
     cursor: pointer;
     width: 100%;
     text-align: left;
+    color: black !important;
     
   }
   .dropdown-menu {
     position: absolute;
     top: 100%; /* positions the menu below the button */
     left: 0;
-    width: 100%; /* ensures it matches the width of the dropdown-toggle */
+    width: 100%;
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 4px; 
@@ -41,6 +42,9 @@
     position: relative;
     display: inline-block;
     width: 100%;
+  }
+  .dropdown-toggle::after {
+    margin-left: auto;
   }
   #results {
     position: absolute;
@@ -173,6 +177,18 @@
     color: #000;
     text-align:left;
   }
+  input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+  }
+  #subtitle{
+    font-size: 15px;
+    color: #000;
+    position: absolute;
+    
+  }
+  
 </style>
 
 {% endblock %}
@@ -220,33 +236,34 @@
 
     <!-- Selecting Different Actions, Orders, Quantities-->
     <div class = choice-dropdown>
-    <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Action
-    </button>
-  </br>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#">Buy</a></li>
-      <li><a class="dropdown-item" href="#">Sell</a></li>
-    </ul>
-  </br>
-    <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-      Quantity
-    </button>
+      <h2 id ="subtitle">Actions</h2>
     </br>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#">Action</a></li>
-      <li><a class="dropdown-item" href="#">Another action</a></li>
-      <li><a class="dropdown-item" href="#">Something else here</a></li>
-    </ul>
-  </br>
-    <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-      Order Type
+    <div class="dropdown">
+    <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" id = "actionDropdown" aria-expanded="false">
+        Select Option
     </button>
-    <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="#">Action</a></li>
-      <li><a class="dropdown-item" href="#">Another action</a></li>
-      <li><a class="dropdown-item" href="#">Something else here</a></li>
+  </br>
+    <ul class="dropdown-menu" aria-labelledby="actionDropdown">
+      <li><a class="dropdown-item" data-value = "Buy" >Buy</a></li>
+      <li><a class="dropdown-item" data-value = "Sell">Sell</a></li>
     </ul>
+  </div>
+  </br>
+    <h2 id ="subtitle">Amount</h2>
+</br>
+    <input type="number" id="quantity" name="quantity" min="0" max="100" step="1">
+  </br>
+  </br>
+    <h2 id ="subtitle">Order Type</h2>
+  </br>
+  <div class="dropdown">
+    <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown"id = "orderDropdown" aria-expanded="false">
+      Select Option
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="orderDropdown">
+      <li><a class="dropdown-item" data-value = "Market">Market</a></li>
+    </ul>
+  </div>
   </br>
   </br>
   <button type="button" aria-expanded="false" onclick = "tradeReview()" >
@@ -258,8 +275,8 @@
 <div id = "review-screen" class="screen-overlay">
   <div class  = "screen-content">
     <h2>Order Review</h2>
-    <p><strong>Symbol:</strong><span id = "symbol" class = "review-stat">Temp</span></p>
-    <p><strong>Shares:</strong><span id = "shares" class = "review-stat">Temp</span></p>
+    <p><strong>Symbol: </strong><span id = "symbol" class = "review-stat">Temp</span></p>
+    <p><strong>Shares: </strong><span id = "shares" class = "review-stat">Temp</span></p>
     <p><strong>Price: </strong> <span id = "prices" class = "review-stat">Temp</span></p>
   <div class = "screen-buttons">
       <button onclick="confirmOrder()">Confirm Order</button>
@@ -276,6 +293,17 @@
 {% endblock %}
 
 {% block chartjs %}
+document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
+  item.addEventListener('click', function (e) {
+    e.preventDefault(); // Prevent default link behavior
+
+    const selectedValue = this.getAttribute('data-value');
+    const button = this.closest('.dropdown').querySelector('.dropdown-toggle');
+
+    button.textContent = selectedValue;
+  });
+});
+
   let myChart = null;
 
   // Search Bar Functionality
@@ -286,19 +314,26 @@
   function tradeReview(){
     document.getElementById("review-screen").style.display = "flex";
     document.getElementById("symbol").textContent = document.getElementById("symbol-title").textContent;
+    document.getElementById("shares").textContent = document.getElementById("quantity").value;
+    document.getElementById("prices").textContent = document.getElementById("current-price").textContent;
   }
   function cancelOrder(){
     document.getElementById("review-screen").style.display = "none";
   }
   function confirmOrder(){
-    fetch('/login', {
+    fetch('/trade', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'  // <-- Important!
+      },
       body: JSON.stringify({
-        symbol: document.getElementById("symbol-title").textContent,
+        action: document.getElementById("actionDropdown").textContent,
+        symbol: document.getElementById("symbol").textContent,
         shares: document.getElementById("shares").textContent,
         price: document.getElementById("current-price").textContent
       })
     })
+    document.getElementById("review-screen").style.display = "none";
   }
 
   function searchStock(){

@@ -50,7 +50,7 @@ class Account(db.Model):
     money = db.Column(db.Float, default = 100_000_000)
     total_value = db.Column(db.Float, default = 100_000_000)
     
-    stocks = db.relationship('Stock_Portfolio', back_populates="account", lazy=True)
+    stocks = db.relationship('Trades', back_populates="account", lazy=True)
     
 
 # Stock Names for Search
@@ -61,15 +61,25 @@ class Stock(db.Model):
     exchange = db.Column(db.String(50))
     
 #Stocks in each account
-class Stock_Portfolio(db.Model):
+class Trades(db.Model):
     __tablename__ = "Stock_Portfolio"
     
     id = db.Column(db.Integer, primary_key = True)
-    ticker = db.Column(db.String(10),nullable = False)
+    ticker = db.Column(db.String(10), index = True, nullable = False)
     shares = db.Column(db.Float,nullable = False)
+    price = db.Column(db.Float, nullable = False)
+    date = db.Column(db.DateTime, server_default=func.now())
+
     account_id = db.Column(db.Integer, ForeignKey('account.id'),nullable=False)
-    
     account = db.relationship("Account", back_populates="stocks")
+    
+@app.before_request
+def clear_session_if_invalid():
+    username = session.get('username')
+    if username:
+        user = Account.query.filter_by(username=username).first()
+        if not user:
+            session.clear()
 
 #Populating the Stock Table
 #Finds existing symbols in database and only adds new ones into table from CSV
@@ -98,7 +108,7 @@ with app.app_context():
                 existing_symbols.add(symbol) 
 
         db.session.commit()
-
+            
 #Flask-Admin
 admin = Admin(app, name='Admin', template_mode='bootstrap3')
 
@@ -148,10 +158,39 @@ def login():
 
 #Renders Simulator Page
 @app.route('/trading', methods = ('GET','POST'))
-def trading():      
-    data = request.get_json()
+def trading():                 
     return render_template('simulator/trading.html')
 
+#Function to Deal with Trade Requests
+@app.route('/trade', methods = ['GET','POST'])
+def trade():
+    data = request.get_json()
+    print(data)
+    account = Account.query.filter_by(username = session['username']).first()
+    if(data['action'] == 'Buy'):
+        if account:
+            price = data['price'].replace('$', '').replace(',', '')
+            if account.money >= float(price) * float(data['shares']):
+                new_stock = Trades(ticker = data['symbol'], shares = data['shares'], price = price, account_id = account.id)
+                db.session.add(new_stock)
+                account.money -= float(price) * float(data['shares'])
+                db.session.commit()
+                return jsonify({'status': 'success', 'message': 'Stock purchased successfully!'})
+    elif(data['action'] == 'Sell'):
+        if account:
+            price = data['price'].replace('$', '').replace(',', '')
+            stock = Trades.query.filter_by(ticker = data['symbol'], account_id = account.id).first()
+            if stock and stock.shares >= float(data['shares']):
+                stock.shares -= float(data['shares'])
+                account.money += float(price) * float(data['shares'])
+                db.session.commit()
+                return jsonify({'status': 'success', 'message': 'Stock sold successfully!'})
+            
+@app.route('/live-view')
+def live_view():
+    trades = Trades.query.order_by(Trades.date.desc()).all()
+    return render_template('simulator/trades_live.html', trades=trades)
+        
 #Gets Data to be presented
 #Display historical data depending on if websocket exists, first if means no websocket available
 #This function will return data for the requested symbol
