@@ -16,7 +16,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FLASK_DIR = os.path.dirname(BASE_DIR) 
 
 # Now correctly reference the static folder
-STATIC_FOLDER = os.path.join(FLASK_DIR, "FinancialWeb/static")
+STATIC_FOLDER = os.path.join(FLASK_DIR, "FinancialWeb-main/static")
 
 file_path = os.path.join(STATIC_FOLDER, "trial_stock.csv")
 file_path2 = "static/stock_data.json"

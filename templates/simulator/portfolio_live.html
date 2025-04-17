@@ -5,11 +5,16 @@
   <title>Live View</title>
 </head>
 <body>
-  <h2>Trades</h2>
+  <h2>Portfolio</h2>
   <ul>
-    {% for t in trades %}
+    {% for t in portfolio %}
       <li>{{ t.trade_type }} {{ t.shares }} {{ t.ticker }} @ ${{ t.price }} — {{ t.date }}</li>
     {% endfor %}
+  </ul>
+
+  <h2>Value</h2>
+  <ul>
+    <li>Money: ${{ money }}</li>
   </ul>
 </body>
 </html>

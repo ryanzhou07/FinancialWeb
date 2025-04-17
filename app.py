@@ -50,8 +50,8 @@ class Account(db.Model):
     money = db.Column(db.Float, default = 100_000_000)
     total_value = db.Column(db.Float, default = 100_000_000)
     
-    stocks = db.relationship('Trades', back_populates="account", lazy=True)
-    
+    stocks = db.relationship('Portfolio', back_populates="account", lazy=True)
+    ledger = db.relationship('Ledger', back_populates="account", lazy=True)
 
 # Stock Names for Search
 class Stock(db.Model):
@@ -61,7 +61,7 @@ class Stock(db.Model):
     exchange = db.Column(db.String(50))
     
 #Stocks in each account
-class Trades(db.Model):
+class Portfolio(db.Model):
     __tablename__ = "Stock_Portfolio"
     
     id = db.Column(db.Integer, primary_key = True)
@@ -72,6 +72,20 @@ class Trades(db.Model):
 
     account_id = db.Column(db.Integer, ForeignKey('account.id'),nullable=False)
     account = db.relationship("Account", back_populates="stocks")
+
+##All Trades Done in Ledger
+class Ledger(db.Model):
+    __tablename__ = "ledger"
+    
+    id = db.Column(db.Integer, primary_key = True)
+    ticker = db.Column(db.String(10), index = True, nullable = False)
+    shares = db.Column(db.Float,nullable = False)
+    price = db.Column(db.Float, nullable = False)
+    buy_or_sell = db.Column(db.String(10), nullable = False)
+    date = db.Column(db.DateTime, server_default=func.now())
+    
+    account_id = db.Column(db.Integer, ForeignKey('account.id'),nullable=False)
+    account = db.relationship("Account", back_populates="ledger")
     
 @app.before_request
 def clear_session_if_invalid():
@@ -158,43 +172,71 @@ def login():
 
 #Renders Simulator Page
 @app.route('/trading', methods = ('GET','POST'))
-def trading():                 
+def trading(): 
+    handle_reset()                
     return render_template('simulator/trading.html')
 
+#TODO Fix Sell so that it saves all transactions in a ledger vs only portfolio
 #Function to Deal with Trade Requests
 @app.route('/trade', methods = ['GET','POST'])
 def trade():
     data = request.get_json()
-    print(data)
     account = Account.query.filter_by(username = session['username']).first()
+    shares = float(data['shares'])
     if(data['action'] == 'Buy'):
         if account:
             price = data['price'].replace('$', '').replace(',', '')
-            if account.money >= float(price) * float(data['shares']):
-                new_stock = Trades(ticker = data['symbol'], shares = data['shares'], price = price, account_id = account.id)
+            
+            if account.money >= float(price) * shares:
+                new_stock = Portfolio(ticker = data['symbol'], shares = data['shares'], price = price, account_id = account.id)
+                new_entry = Ledger(ticker = data['symbol'], shares = data['shares'], price = price, account_id = account.id, buy_or_sell = 'Buy')
+                
                 db.session.add(new_stock)
-                account.money -= float(price) * float(data['shares'])
+                db.session.add(new_entry)
+                
+                account.money -= float(price) * shares
                 db.session.commit()
                 return jsonify({'status': 'success', 'message': 'Stock purchased successfully!'})
+
     elif(data['action'] == 'Sell'):
         if account:
             price = data['price'].replace('$', '').replace(',', '')
-            stock = Trades.query.filter_by(ticker = data['symbol'], account_id = account.id).first()
-            if stock and stock.shares >= float(data['shares']):
-                stock.shares -= float(data['shares'])
-                account.money += float(price) * float(data['shares'])
-                db.session.commit()
-                return jsonify({'status': 'success', 'message': 'Stock sold successfully!'})
+            stocks = Portfolio.query.filter_by(ticker = data['symbol'], account_id = account.id)
+            shares = float(data['shares'])
+            total_shares = sum(stock.shares for stock in stocks)
             
+            if total_shares < shares:
+                return jsonify({'status': 'error', 'message': 'Not enough shares to sell!'})
+            elif stocks and total_shares >= shares:
+                for stock in stocks:
+                    if stock.shares > shares:
+                        stock.shares -= float(data['shares'])
+                        account.money += float(price) * float(data['shares'])
+                        db.session.commit()
+                        return jsonify({'status': 'success', 'message': 'Stock sold successfully!'})
+                    elif stock.shares < shares:
+                        db.session.delete(stock)
+                        shares -= float(stock.shares)
+                        account.money += float(price) * float(data['shares'])
+                        db.session.commit()
+                    elif stock.shares == shares:
+                        db.session.delete(stock)
+                        account.money += float(price) * float(data['shares'])
+                        db.session.commit()
+                        return jsonify({'status': 'success', 'message': 'Stock sold successfully!'})
+                
+    return jsonify({'status': 'error', 'message': 'Not enough money in account!'})
+
 @app.route('/live-view')
 def live_view():
-    trades = Trades.query.order_by(Trades.date.desc()).all()
-    return render_template('simulator/trades_live.html', trades=trades)
+    portfolio = Portfolio.query.order_by(Portfolio.date.desc()).all()
+    user = Account.query.filter_by(username = session['username']).first()
+    return render_template('simulator/portfolio_live.html', portfolio=portfolio, money = user.money)
         
 #Gets Data to be presented
 #Display historical data depending on if websocket exists, first if means no websocket available
 #This function will return data for the requested symbol
-#TODO - Change to work with websockets and check if it is in test data
+
 @app.route('/get-data', methods = ['Post'])
 def get_data():
     symbol = request.data.decode('utf-8')
@@ -279,7 +321,7 @@ def handle_subscribe(data):
         print("WebSocket is not initialized")
 
 #Unsubscribes Old Symbol when New Stock Name is Chosen
-#TODO Fix Unsubscribe for Bitcoin to APPL Chnage
+
 @socketio.on('unsubscribe')
 def handle_unsubscribe(data):
     global ws
@@ -314,7 +356,7 @@ def handle_reset():
         
 
 #For Testing Purposes Can Be Used Later
-# - > data_call()
+# -> data_call()
 
 if __name__ == "__main__":
     socketio.run(app, host="127.0.0.1", port=8000, debug=True)
