@@ -1,0 +1,10 @@
+.env
+.venv
+__pycache__
+.vscode/
+kernels/
+.ipynb_checkpoints/
+financewebsite/
+.idea/
+lib/
+venv/.env

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="refresh" content="5"> <!-- Refresh every 5s -->
+  <title>Live View</title>
+</head>
+<body>
+  <h2>Trades</h2>
+  <ul>
+    {% for t in trades %}
+      <li>{{ t.trade_type }} {{ t.shares }} {{ t.ticker }} @ ${{ t.price }} — {{ t.date }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>

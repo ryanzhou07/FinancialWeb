@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% block title %}<title>Stock Simulator</title>{% endblock %}
+  {% block links %}{% endblock %}
+  <style>
+
+    /* Basic Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Page Styles */
+    body {
+      background-color: #001f3f; /* Navy blue background */
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-bottom: 60px; 
+    }
+
+    #content {
+      flex: 1;
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* Navigation Bar Styles */
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background-color: #001a35; 
+      width: 100%;
+    }
+    nav button {
+      flex: 1 1 50%;
+      padding: 12px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    nav button:hover {
+      background-color: #003366; /* Hover state lighter color */
+    }
+    nav button.active {
+      background-color: #003366; /* Active tab indicated by lighter blue */
+    }
+    .bottom-buttons {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+    }
+    {% block custom_styles %}{% endblock %}
+  </style>
+</head>
+<body>
+  <!-- Main Content Area -->
+  <div id="content">
+    {%block page_data%}{%endblock%}
+  </div>
+  <!-- Navigation Bar at Bottom -->
+  <div class = "bottom-buttons">
+    <nav>
+      <button id="btn-portfolio" {%block portfolio_button%}{%endblock%} onclick="window.location.href='{{ url_for('portfolio') }}'">Portfolio</button>
+      <button id="btn-trade" {%block trade_button%}{%endblock%} onclick="window.location.href='{{ url_for('trading') }}'">Trade</button>
+    </nav>
+  </div>
+
+  <!-- JavaScript for Socketio -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+      var socket = io();
+      socket.on('connect', function() {
+          socket.emit('my event', {data: 'I\'m connected!'});
+      });
+  </script>
+  <!-- JavaScript for Page Switching -->
+  <script>
+    function changePage(page) {
+      // Update the main content area with a placeholder title and text
+      const content = document.getElementById('content');
+      content.innerHTML = `<h1>${page}</h1><p>Content for the ${page} section goes here.</p>`;
+      
+      // Add active class to the clicked button
+      const activeButton = document.getElementById('btn-' + page.toLowerCase());
+      if (activeButton) {
+        activeButton.classList.add('active');
+      }
+      socket.emit('reset');
+    }
+    {% block chartjs%}{% endblock %}
+  </script>
+</body>
+</html>
