@@ -8,3 +8,4 @@ financewebsite/
 .idea/
 lib/
 venv/.env
+static/stock_data.json

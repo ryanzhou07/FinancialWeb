@@ -198,12 +198,6 @@ def live_view():
 @app.route('/get-data', methods = ['Post'])
 def get_data():
     symbol = request.data.decode('utf-8')
-    if symbol!= 'AAPL' and symbol != 'QQQ' and symbol != 'TRP:TSX' and symbol != 'VOW3:XETR' and symbol != 'BTC/USD':
-        df = pd.read_parquet("static/stock_data.parquet")
-        df = df.round(2)
-        df = df.groupby("Symbol").apply(lambda x: x.to_dict(orient="records")).to_dict()
-        df = df[symbol]
-        return jsonify(df)
     with open("static/stock_data.json", "r") as f:
         data = json.load(f)
     return jsonify(data[symbol]["values"])
