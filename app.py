@@ -279,7 +279,7 @@ def setup_ws():
         socketio.emit('update', data)
     
     ws = websocket.WebSocketApp(
-        "wss://ws.twelvedata.com/v1/quotes/price?apikey=REMOVED_KEY",
+        "wss://ws.twelvedata.com/v1/quotes/price?apikey="+api_key,
         on_open=on_open,
         on_message=on_message
     )
