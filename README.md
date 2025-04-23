@@ -6,6 +6,7 @@ Clone Repo/Download Zip File
 
 Create Virtual Environment  
 python -m venv venv / python3 on Mac
+
 source venv/bin/activate 
 
 Install Requirements.txt
